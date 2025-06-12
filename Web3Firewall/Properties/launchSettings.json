@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+    "profiles": {
+      "http": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": true,
+        "applicationUrl": "http://localhost:5285",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "PROXY__DEFAULT__READ__ONLY": "true",
+          "PROXY__UPSTREAM_URI": "https://eth.llamarpc.com",
+          "PROXY__UPSTREAM__TIMEOUT": "30",
+          "PROXY__CHAIN_PROTOCOL": "1",
+          "PROXY__DB__PATH": "RpcRequestsLog.db"
+        }
+      }
+    }
+  }
