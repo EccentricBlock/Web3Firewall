@@ -4,6 +4,8 @@
 Infrastructure/data
 *.log
 *.db
+*.db-*
+
 
 # User-specific files
 *.suo

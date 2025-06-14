@@ -1,81 +1,187 @@
 ﻿@page "/"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Web3Firewall.Shared.Database.Tables
+@using Web3Firewall.Shared.Enums
+@using Web3Firewall.Shared.Models
+@inject HttpClient Http
+
 
 <PageTitle>Home</PageTitle>
 
 <br/>
-<MudCard>
-    <MudCardHeader>
-        <CardHeaderContent>
-            <MudText Typo="Typo.h6">The Story Book</MudText>
-        </CardHeaderContent>
-        <CardHeaderActions>
-            <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Default" />
-        </CardHeaderActions>
-    </MudCardHeader>
-    <MudCardContent>
-        <MudText>This day everything happened.</MudText>
-        <MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>
-    </MudCardContent>
-</MudCard>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudToolBar>
+            <MudToggleIconButton Toggled="isReadOnly" ,
+                                 ToggledChanged="OnReadOnlyChanged"
+                                 Icon="@Icons.Material.Filled.AlarmOff"
+                                 Color="@Color.Error"
+                                 ToggledIcon="@Icons.Material.Filled.AlarmOn"
+                                 ToggledColor="@Color.Success"
+                                 title="@(isReadOnly ? "On" : "Off")" />
+            <MudSpacer />
+            <MudText Typo="Typo.h6">RPC Request Logs</MudText>
+        </MudToolBar>
+    </MudPaper>
+
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudGrid Spacing="2" Justify="Justify.FlexStart" Class="mb-4">
+            <MudItem xs="12" sm="6" md="3">
+                <MudTextField T="string" Label="Filter by Method" Variant="Variant.Outlined"
+                              @bind-Value="methodFilter" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              OnAdornmentClick="@(() => _table.ReloadServerData())" DebounceInterval="300" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="3">
+                <MudSelect T="ChainProtocol?" Label="Filter by Protocol" @bind-Value="protocolFilter"
+                           Variant="Variant.Outlined" Clearable="true" OnClearButtonClick="@(() => { protocolFilter = null; _table.ReloadServerData(); })">
+                    @foreach (ChainProtocol proto in Enum.GetValues(typeof(ChainProtocol)))
+                    {
+                        <MudSelectItem Value="@((ChainProtocol?)proto)">@proto.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+             <MudItem xs="6" sm="3" md="2" Class="d-flex align-center">
+                <MudCheckBox T="bool?" @bind-Checked="@blockedFilter" Label="Blocked" Indeterminate="true"/>
+            </MudItem>
+            <MudItem xs="6" sm="3" md="2" Class="d-flex align-center">
+                <MudCheckBox T="bool?" @bind-Checked="@erroredFilter" Label="Errored" Indeterminate="true"/>
+            </MudItem>
+            <MudItem xs="12" md="2" Class="d-flex align-center justify-end">
+                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => _table.ReloadServerData())">Apply Filters</MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <MudTable T="RPCRequestLogEntry" ServerData="ServerReload"
+                  @ref="_table" Dense="true" Hover="true" Striped="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Timestamp</MudTh>
+                <MudTh>Method</MudTh>
+                <MudTh>Protocol</MudTh>
+                <MudTh>Block #</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Timestamp">@context.Timestamp.ToString("o")</MudTd>
+                <MudTd DataLabel="Method">
+                    <MudText Typo="Typo.body2"><MudHighlighter Text="@context.Method" HighlightedText="@methodFilter" /></MudText>
+                </MudTd>
+                <MudTd DataLabel="Protocol">@context.ChainProtocol</MudTd>
+                <MudTd DataLabel="Block #">@context.BlockNumber</MudTd>
+                <MudTd DataLabel="Status">
 
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
 
 
 
+                    @if (context.Blocked)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Blocked</MudChip>
+                    }
+                    @if (context.Errored)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Errored</MudChip>
+                    }
+                    @if (!context.Blocked && !context.Errored)
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">Success</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Search" Variant="Variant.Outlined" Color="Color.Primary"  />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No matching records found.</MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </LoadingContent>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 9 Template!</MudText>
+@code {
 
-<MudAlert Severity="Severity.Normal" ContentAlignment="HorizontalAlignment.Start">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+    // --- Component State ---
+    private MudTable<RPCRequestLogEntry> _table = new MudTable<RPCRequestLogEntry>();
+    private bool isReadOnly;
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br />
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br />
-    the render modes are defined in App.razor and consequently apply to all child components.<br />
-    In this case, providers are globally set in the MainLayout.<br />
-    <br />
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br />
-    it is necessary to include the <br />
-    <br />
-    &lt;MudPopoverProvider /&gt; <br />
-    &lt;MudDialogProvider /&gt; <br />
-    &lt;MudSnackbarProvider /&gt; <br />
-    <br />
-    components on every interactive page.<br />
-    <br />
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br />
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br />
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+    // --- Filter State ---
+    private string methodFilter = "";
+    private ChainProtocol? protocolFilter;
+    private bool? blockedFilter; // Using nullable bool for three states (true, false, any)
+    private bool? erroredFilter;
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 9</MudText>
-<br />
+    // This property watches for filter changes to automatically reload the table.
+    private object[] FilterWatchers => new object[] { blockedFilter, erroredFilter, protocolFilter };
 
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 9 Blazor,<br /> you might be pleasantly surprised to learn that each page is prerendered on the server,<br /> regardless of the selected render mode.<br /><br />
-    This means that you'll need to inject all necessary services on the server,<br /> even when opting for the wasm (WebAssembly) render mode.<br /><br />
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br /> especially when it comes to initial page load times.<br /><br />
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
 
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+    /// <summary>
+    /// This is the primary method called by the MudTable to fetch data from the server.
+    /// It gathers all sorting, pagination, and filter parameters to make a single API call.
+    /// </summary>
+    
+    private async Task<TableData<RPCRequestLogEntry>> ServerReload(TableState state, CancellationToken token)
+    {
+        // Construct the request payload
+
+
+            var apiRequest = new LogQueryRequest(
+                state.Page + 1, // Page (API expects 1-based index)
+                state.PageSize, // PageSize
+                state.SortLabel, // SortBy
+                (ushort)state.SortDirection, // SortDirection
+                string.IsNullOrWhiteSpace(methodFilter) ? null : methodFilter, // Method
+                (ushort?)protocolFilter, // ChainProtocol (nullable ushort)
+                blockedFilter, // IsBlocked
+                erroredFilter // IsErrored
+            );
+
+        try
+        {
+            // Determine the endpoint based on whether a method filter is active
+            string endpoint = string.IsNullOrWhiteSpace(apiRequest.Method) ? "/Logs" : "/Logs/ByMethod";
+
+            var apiResult = new TableData<RPCRequestLogEntry>();
+
+
+            if (apiResult != null)
+            {
+                //                return new TableData<RPCRequestLogEntry>() { TotalItems = apiResult.TotalCount, Items = apiResult.Items };
+
+                return new TableData<RPCRequestLogEntry>() { TotalItems = 0, Items = apiResult.Items };
+            }
+        }
+        catch (Exception ex)
+        {
+            // TODO: Add proper logging and user notification (e.g., via MudSnackbar)
+            Console.WriteLine($"Failed to load data: {ex.Message}");
+        }
+
+        // Return empty data on failure
+        return new TableData<RPCRequestLogEntry>() { TotalItems = 0, Items = new List<RPCRequestLogEntry>() };
+    }
+    private Task OnReadOnlyChanged(bool args)
+    {
+        //TODO: send the API request
+        throw new NotImplementedException();
+    }
+}
