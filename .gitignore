@@ -3,6 +3,7 @@
 
 Infrastructure/data
 *.log
+*.db
 
 # User-specific files
 *.suo

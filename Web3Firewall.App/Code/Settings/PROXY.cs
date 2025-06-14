@@ -1,10 +1,9 @@
 ﻿using Web3Firewall.Shared.Enums;
 
-namespace Web3Firewall.Code.Settings;
+namespace Web3Firewall.App.Code.Settings;
 
 public class PROXY
 {
-
     public ushort UPSTREAM_TIMEOUT { get; set; } = 30;
 
     public bool DEFAULT_READ_ONLY { get; set; } = true;

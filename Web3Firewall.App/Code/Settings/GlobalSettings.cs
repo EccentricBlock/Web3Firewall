@@ -1,4 +1,4 @@
-﻿namespace Web3Firewall.Code.Settings;
+﻿namespace Web3Firewall.App.Code.Settings;
 
 public class GlobalSettings
 {

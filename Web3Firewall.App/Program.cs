@@ -1,15 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MudBlazor.Services;
 using Scalar.AspNetCore;
+using System;
 using System.Threading.Channels;
-using Web3Firewall.APIs;
-using Web3Firewall.Code.RpcEndpoints;
-using Web3Firewall.Code.Settings;
-using Web3Firewall.Components;
+using Web3Firewall.App.Code.APIs;
+using Web3Firewall.App.Code.RpcEndpoints;
+using Web3Firewall.App.Code.Settings;
+using Web3Firewall.App.Components;
 using Web3Firewall.Shared.Database;
 using Web3Firewall.Shared.Database.Tables;
 using Web3Firewall.Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add MudBlazor services
+builder.Services.AddMudServices();
+
+// Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 builder.Services.AddOpenApi();
 
@@ -30,10 +40,6 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestLineSize = 4096; // 4 KB
 });//builder.WebHost.ConfigureKestrel(options =>
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
 builder.Services.AddDbContextFactory<AppDBContext>(opt => opt.UseSqlite($"Data Source={proxySettings.DB_PATH};Pooling=True;")
                                                                  .AddInterceptors(new SQLiteInterceptor())
                                                   );//builder.Services.AddDbContextFactory<AppDBContext>
@@ -43,7 +49,6 @@ builder.Services.AddHostedService<RPCLogPersistenceService>();
 builder.Services.AddSingleton<GlobalSettings>();
 builder.Services.AddSingleton(rpcLogChannel);
 builder.Services.AddHttpClient();
-
 
 var app = builder.Build();
 
@@ -57,14 +62,19 @@ using (IServiceScope scope = app.Services.CreateScope())
     globalSettings.IsReadOnlyMode = proxySettings.DEFAULT_READ_ONLY;
 }
 
-
-app.UseRouting();
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
 }
+
+
+app.UseRouting();
+
+app.UseAntiforgery();
+
+app.MapStaticAssets();
+
 
 app.MapOpenApi()
         .CacheOutput()
@@ -80,10 +90,6 @@ app.AddStandardJsonRpcProxyEndpoints();
 app.AddAdminAPIEndpoints();
 app.AddLogsAPIEndpoints();
 
-
-app.UseStaticFiles();
-
-app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

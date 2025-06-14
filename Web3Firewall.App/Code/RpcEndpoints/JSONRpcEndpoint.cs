@@ -5,16 +5,16 @@ using Scalar.AspNetCore;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
-using Web3Firewall.Code.Settings;
+using Web3Firewall.App.Code.Settings;
 using Web3Firewall.Shared.Database;
 using Web3Firewall.Shared.Database.Tables;
 using Web3Firewall.Shared.Models;
 using Web3Firewall.Shared.Services;
 using Web3Firewall.Shared.Utils.JsonRPC;
 
-namespace Web3Firewall.Code.RpcEndpoints;
+namespace Web3Firewall.App.Code.RpcEndpoints;
 
-public static class JSONRrpcEndpoint
+public static class JSONRpcEndpoint
 {
     public static WebApplication AddStandardJsonRpcProxyEndpoints(this WebApplication app)
     {

@@ -1,15 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Web3Firewall.Code.Settings;
+using Web3Firewall.App.Code.Settings;
 using Web3Firewall.Shared.Database;
 
-
-namespace Web3Firewall.APIs;
+namespace Web3Firewall.App.Code.APIs;
 
 public static class AdminEndpoint
 {
-
-
-
     public static WebApplication AddAdminAPIEndpoints(this WebApplication app)
     {
         app.UseRouting();
@@ -19,7 +15,7 @@ public static class AdminEndpoint
         networkGroup.MapPost("/SetReadOnly", async (AppDBContext db, GlobalSettings globalSettings, [FromBody] bool readOnlyEnabled) =>
         {
 
-            if(readOnlyEnabled && globalSettings.IsReadOnlyMode)
+            if (readOnlyEnabled && globalSettings.IsReadOnlyMode)
             {
                 return Results.BadRequest("Read-only mode is already enabled.");
             }

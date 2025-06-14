@@ -4,11 +4,10 @@ using Web3Firewall.Shared.Database;
 using Web3Firewall.Shared.Database.Tables;
 using Web3Firewall.Shared.Models;
 
-namespace Web3Firewall.APIs;
+namespace Web3Firewall.App.Code.APIs;
 
 public static class LogsEngpoint
 {
-
     public static WebApplication AddLogsAPIEndpoints(this WebApplication app)
     {
         app.UseRouting();
@@ -54,6 +53,4 @@ public static class LogsEngpoint
 
         return app;
     }//AddLogsAPIEndpoints(this WebApplication app)
-
-    
-}//LogsEngpoint
+}
